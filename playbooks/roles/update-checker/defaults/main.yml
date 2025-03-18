@@ -1,0 +1,4 @@
+---
+UPDATE_CHECKER_PATH: /opt/rethinkdb-update
+UPDATE_CHECKER_REPO: https://github.com/rethinkdb/rethinkdb-update.git
+UPDATE_CHECKER_VERSION: master

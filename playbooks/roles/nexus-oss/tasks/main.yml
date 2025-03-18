@@ -1,0 +1,57 @@
+---
+- name: Install java dependencies
+  apt:
+    name:
+      - openjdk-17-jdk
+
+- name: Ensure nexus user exists
+  user:
+    name: nexus
+    shell: /bin/bash
+    state: present
+
+- name: Ensure nexus path exists
+  file:
+    path: "{{ NEXUS_OSS_PATH }}"
+    state: directory
+    owner: nexus
+
+- name: Get nexus version stats
+  stat:
+    path: "{{ NEXUS_OSS_PATH }}/nexus-{{ NEXUS_OSS_VERSION }}"
+  register: nexust_artifact
+
+- name: Download and unarchive nexus OSS
+  become_user: nexus
+  unarchive:
+    src: "https://download.sonatype.com/nexus/3/nexus-unix-x86-64-{{ NEXUS_OSS_VERSION }}.tar.gz"
+    dest: "{{ NEXUS_OSS_PATH }}"
+    remote_src: yes
+  when: not nexust_artifact.stat.exists
+
+- name: Link the current nexus directory
+  file:
+    src: "{{ NEXUS_OSS_PATH }}/nexus-{{ NEXUS_OSS_VERSION }}"
+    dest: "{{ NEXUS_OSS_PATH }}/current"
+    state: link
+    force: true
+    owner: nexus
+
+- name: Copy nexus.rc file
+  copy:
+    src: nexus.rc
+    dest: "{{ NEXUS_OSS_PATH }}/current/bin/nexus.rc"
+    owner: nexus
+
+- name: Render nexus.service file
+  template:
+    src: nexus.service.j2
+    dest: /etc/systemd/system/nexus.service
+    owner: nexus
+
+- name: Ensure nexus service is running and enabled
+  systemd_service:
+    name: nexus
+    state: restarted
+    enabled: true
+    daemon_reload: true

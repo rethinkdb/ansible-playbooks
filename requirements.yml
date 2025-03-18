@@ -1,0 +1,17 @@
+---
+collections:
+  - name: devsec.hardening
+    source: https://github.com/dev-sec/ansible-collection-hardening.git
+    version: d4ca770dcd62e3e74e18086a02a24cc9c4b44027
+    type: git
+
+roles:
+  - name: geerlingguy.ansible-role-swap
+    src: https://github.com/geerlingguy/ansible-role-swap.git
+    version: 97614edef651f6de44a2707a51ffca6e2a553cef
+    scm: git
+
+  - name: geerlingguy.ansible-role-certbot
+    src: https://github.com/geerlingguy/ansible-role-certbot.git
+    version: 1278651f0d6997638dfe98c522979ea4237e98cf
+    scm: git

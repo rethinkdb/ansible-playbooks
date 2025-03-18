@@ -1,0 +1,69 @@
+---
+- name: Install nginx and dependencies
+  apt:
+    name:
+      - nginx
+    state: present
+
+- name: Install and configure certbot
+  import_role:
+    name: geerlingguy.ansible-role-certbot
+  vars:
+    certbot_create_extra_args: ""
+    certbot_create_if_missing: true
+    certbot_create_standalone_stop_services:
+      - nginx
+    certbot_install_method: snap
+    certbot_admin_email: "{{ LETSENCRYPT_NOTIFY_EMAIL }}"
+    certbot_certs:
+      - domains:
+          - "{{ NGINX_PROXY_SERVER_NAME }}"
+
+- name: Disable nginx default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify:
+    - reload nginx
+
+- name: Set up global nginx SSL settings
+  copy:
+    src: nginx-ssl
+    dest: /etc/nginx/conf.d/ssl.conf
+  notify:
+    - reload nginx
+
+- name: Reload nginx if required
+  meta: flush_handlers
+
+- name: Set up nginx to reverse-proxy
+  template:
+    src: nginx-proxy.j2
+    dest: "{{ NGINX_PROXY_CONFIG_PATH }}"
+  register: sites_available
+
+- name: Enable nginx site configuration
+  file:
+    src: "{{ NGINX_PROXY_CONFIG_PATH }}"
+    dest: "/etc/nginx/sites-enabled/{{ NGINX_PROXY_CONFIG_PATH | basename }}"
+    state: link
+  register: sites_enabled
+
+- name: Open public port on the firewall
+  ufw:
+    rule: allow
+    port: "{{ NGINX_PROXY_PUBLIC_PORT }}"
+    proto: tcp
+
+- name: Reload nginx if necessary
+  when: (sites_available.changed or sites_enabled.changed) and NGINX_PROXY_RELOAD_NGINX
+  shell: echo "reloading nginx"
+  notify:
+    - reload nginx
+
+- name: Harden nginx configuration
+  import_role:
+    name: devsec.hardening.nginx_hardening
+  vars:
+    nginx_limit_conn_zone: "{{ NGINX_LIMIT_CONN_ZONE }}"
+    nginx_limit_conn: "{{ NGINX_LIMIT_CONN }}"

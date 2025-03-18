@@ -1,0 +1,16 @@
+---
+- name: Set up RethinkDB update checker
+  hosts: update_checker
+  become: true
+  roles:
+    - role: common
+      tags:
+        - common
+
+    - role: update-checker
+      tags:
+        - update-checker
+
+    - role: nginx-proxy
+      tags:
+        - nginx-proxy

@@ -1,0 +1,31 @@
+---
+- name: Ensure server access is set up
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure login user exists
+      user:
+        name: ubuntu
+        shell: /bin/bash
+        state: present
+
+    - name: Ensure login user is member of sudoers
+      user:
+        name: ubuntu
+        groups: sudo
+        append: true
+
+    - name: Ensure passwordless sudo for the login user
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: "^ubuntu"
+        line: "ubuntu ALL=(ALL) NOPASSWD:ALL"
+        validate: "/usr/sbin/visudo -cf %s"
+
+    - name: Ensure up-to-date access SSH keys are from GitHub
+      authorized_key:
+        user: ubuntu
+        state: present
+        key: "https://github.com/{{ item }}.keys"
+      with_items: "{{ COMMON_SSH_KEY_GITHUB_USERS }}"
