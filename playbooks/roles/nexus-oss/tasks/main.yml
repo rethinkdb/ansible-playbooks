@@ -24,7 +24,7 @@
 - name: Download and unarchive nexus OSS
   become_user: nexus
   unarchive:
-    src: "https://download.sonatype.com/nexus/3/nexus-unix-x86-64-{{ NEXUS_OSS_VERSION }}.tar.gz"
+    src: "https://download.sonatype.com/nexus/3/nexus-{{ NEXUS_OSS_VERSION }}-linux-x86_64.tar.gz"
     dest: "{{ NEXUS_OSS_PATH }}"
     remote_src: yes
   when: not nexust_artifact.stat.exists
